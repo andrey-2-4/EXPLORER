@@ -1,12 +1,15 @@
 package org.example;
 
+import java.awt.*;
+import java.io.File;
 import java.util.*;
+import java.util.List;
 
 public class Explorer {
-    private String rootPath;
-    private Map<String, List<String>> filesAndRequiredFiles;
-    private ArrayList<FileInfo> files;
+    // private String rootPath;
+    private ArrayList<FileInfo> filesInfo = new ArrayList<>();
     private String resultOfConcatenation;
+    private String requireString = "require '";
 
     /**
      * Инициализирует класс
@@ -14,9 +17,9 @@ public class Explorer {
      */
     public void initialize(String rootPath) {
         checkAndSaveRootPath(rootPath);
-        findAllFilesAndRequirements();
+        findAllFilesAndRequirements(new File(rootPath));
         checkForNoCycles();
-        Collections.sort(files);
+        Collections.sort(filesInfo);
         concatenateAllFiles();
     }
 
@@ -29,14 +32,21 @@ public class Explorer {
 
     /**
      * Если путь корректен, то this.rootPath = rootPath, иначе выбросит исключение
-     * @param rootPath
+     * @param rootPath корневой путь
      * @throws RuntimeException Если некорректный корневой путь
      */
     private void checkAndSaveRootPath (String rootPath) throws RuntimeException {
-        // TODO
-        // Наверное и не рантайм экспшн
-        // Но что-то наверняка выбрасывается
-        // Подправить, когда станет ясно, что (в комментариях тоже)
+        //
+        try {
+            File rootFile = new File(rootPath);
+            if (!rootFile.isDirectory()) {
+                throw new RuntimeException();
+            }
+            // this.rootPath = rootPath;
+            requireString = requireString + rootPath;
+        } catch (Exception exception) {
+            throw new RuntimeException("НЕПРАВИЛЬНЫЙ КОРНЕВОЙ ПУТЬ");
+        }
     }
 
     /**
@@ -44,11 +54,24 @@ public class Explorer {
      * Если будет обнаружен не .txt файл, то он будет проигнорирован
      * @throws RuntimeException
      */
-    private void findAllFilesAndRequirements() throws RuntimeException {
-        // TODO
-        // Наверное и не рантайм экспшн
-        // Но что-то наверняка выбрасывается
-        // Подправить, когда станет ясно, что (в комментариях тоже)
+    private void findAllFilesAndRequirements(File rootFile) throws RuntimeException {
+        //
+        try {
+            File[] directoryFiles = rootFile.listFiles();
+            if (directoryFiles != null) {
+                for (File file : directoryFiles) {
+                    if (file.isDirectory()) {
+                        findAllFilesAndRequirements(file);
+                    } else {
+                        if (file.getName().toLowerCase().endsWith(".txt")) {
+                            filesInfo.add(new FileInfo(file.getAbsolutePath()));
+                        }
+                    }
+                }
+            }
+        } catch (Exception exception) {
+            throw new RuntimeException("ОШИБКА ВО ВРЕМЯ ПОИСКА ФАЙЛОВ И ЗАВИСИМОСТЕЙ");
+        }
     }
 
     /**
@@ -79,10 +102,35 @@ public class Explorer {
      */
     private class FileInfo implements Comparable<FileInfo> {
         String fileName;
+        String textOfFile;
         List<String> requiredFiles;
-        private FileInfo(String fileName, List<String> requiredFiles) {
+        private FileInfo(String fileName) {
             this.fileName = fileName;
-            this.requiredFiles = requiredFiles;
+            saveTextAndRequiredFiles();
+        }
+
+        private void saveTextAndRequiredFiles() {
+            try {
+                File file = new File(fileName);
+                Scanner in = new Scanner(file);
+                textOfFile = "";
+                String line;
+                while(in.hasNextLine()) {
+                    line = in.nextLine();
+                    addRequirements(line);
+                    textOfFile = textOfFile.concat(line + "\n");
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException("ОШИБКА ПРИ РАБОТЕ С ФАЙЛОМ " + fileName);
+            }
+        }
+
+        private void addRequirements(String string) {
+            if (string.startsWith(requireString)) {
+                string = string.replaceAll("'", "");
+                string = string.replaceFirst("require ", "");
+                requiredFiles.add(string);
+            }
         }
 
         @Override

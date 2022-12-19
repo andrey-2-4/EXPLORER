@@ -9,9 +9,9 @@ public class Menu {
             System.out.println("Введите '0', чтобы завершить программу");
             System.out.println("Введите '1', чтобы запустить Explorer");
             String string = in.nextLine();
-            if (string == "0") {
+            if ("0".equals(string)) {
                 break;
-            } else if (string == "1") {
+            } else if ("1".equals(string)) {
                 runExplorer();
             } else {
                 System.out.println("НЕПРАВИЛЬНАЯ КОММАНДА");
