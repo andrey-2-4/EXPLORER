@@ -7,7 +7,8 @@ import java.util.List;
 
 public class Explorer {
     // private String rootPath;
-    private ArrayList<FileInfo> filesInfo = new ArrayList<>();
+    private final ArrayList<FileInfo> filesInfo = new ArrayList<>();
+    private ArrayList<Boolean> maskForCycleChecking;
     private String resultOfConcatenation;
     private String requireString = "require '";
 
@@ -27,7 +28,27 @@ public class Explorer {
      * Метод для вывода результата конкатенации
      */
     public void printConcatenationResult() {
+        System.out.println(resultOfConcatenation);
+    }
+
+    /**
+     * Обнуляет маску
+     */
+    private void setMaskForCycleChecking() {
+        maskForCycleChecking = new ArrayList<>();
+        for (int i = 0; i < filesInfo.size(); ++i) {
+            maskForCycleChecking.add(false);
+        }
+    }
+
+    /**
+     * Получаем результат конкатенации списка файлов (меняем resultOfConcatenation)
+     */
+    private void concatenateAllFiles() throws RuntimeException {
         // TODO
+        // Наверное и не рантайм экспшн
+        // Но что-то наверняка выбрасывается
+        // Подправить, когда станет ясно, что (в комментариях тоже)
     }
 
     /**
@@ -36,7 +57,6 @@ public class Explorer {
      * @throws RuntimeException Если некорректный корневой путь
      */
     private void checkAndSaveRootPath (String rootPath) throws RuntimeException {
-        //
         try {
             File rootFile = new File(rootPath);
             if (!rootFile.isDirectory()) {
@@ -55,7 +75,6 @@ public class Explorer {
      * @throws RuntimeException
      */
     private void findAllFilesAndRequirements(File rootFile) throws RuntimeException {
-        //
         try {
             File[] directoryFiles = rootFile.listFiles();
             if (directoryFiles != null) {
@@ -75,26 +94,34 @@ public class Explorer {
     }
 
     /**
-     * Проверка на наличие циклов в зависимостях
+     * Проверка на наличие циклов в зависимостях в списке всех файлов
      * @throws RuntimeException Если есть циклы в зависимостях
      */
     private void checkForNoCycles() throws RuntimeException {
-        // TODO мой дебильный алгоритм (берем файл, идем по его зависимостям, отмечаемся, что вот мы
-        //  типа пришли, если пришли второй раз, то выбрасываемся, а так идем дальше по зависимостям наших зависимостей;
-        //  потом переходим к следующему файлику и сбрасываем "прихождения (надо будет boolean что-то сделать)", да)
-        //  А ещё надо написать, кто во всём виноват (выводим все зависимости файла (а может просто сам файл),
-        //  с которым мы работали).
-        throw new RuntimeException("ЦИКЛИЧЕСКИЕ ЗАВИСИМОСТИ (ну или одна по крайней мере)");
+        //
+        for (FileInfo fileInfo : filesInfo) {
+            setMaskForCycleChecking();
+            checkForNoCycles(fileInfo);
+        }
     }
 
     /**
-     * Получаем результат конкатенации списка файлов (меняем resultOfConcatenation)
+     * Проверка на наличие циклов в зависимостях ОДНОГО файла
+     * @throws RuntimeException Если есть циклы в зависимостях
      */
-    private void concatenateAllFiles() throws RuntimeException {
-        // TODO
-        // Наверное и не рантайм экспшн
-        // Но что-то наверняка выбрасывается
-        // Подправить, когда станет ясно, что (в комментариях тоже)
+    private void checkForNoCycles(FileInfo fileInfo) throws RuntimeException {
+        //
+        for (String requiredFile : fileInfo.requiredFiles) {
+            for (int i = 0; i < filesInfo.size(); ++i) {
+                if (filesInfo.get(i).fileName.equals(requiredFile)) {
+                    if (maskForCycleChecking.get(i)) {
+                        throw new RuntimeException("ЦИКЛИЧЕСКИЕ ЗАВИСИМОСТИ (ну или одна по крайней мере)");
+                    }
+                    maskForCycleChecking.set(i, true);
+                    checkForNoCycles(filesInfo.get(i));
+                }
+            }
+        }
     }
 
     /**
@@ -103,7 +130,7 @@ public class Explorer {
     private class FileInfo implements Comparable<FileInfo> {
         String fileName;
         String textOfFile;
-        List<String> requiredFiles;
+        ArrayList<String> requiredFiles;
         private FileInfo(String fileName) {
             this.fileName = fileName;
             saveTextAndRequiredFiles();
