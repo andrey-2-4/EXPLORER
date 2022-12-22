@@ -113,7 +113,7 @@ public class Explorer {
                 for (int i = 0; i < filesInfo.size(); ++i) {
                     if (filesInfo.get(i).fileName.equals(requiredFile)) {
                         if (maskForCycleChecking.get(i)) {
-                            throw new RuntimeException("ЦИКЛИЧЕСКИЕ ЗАВИСИМОСТИ (ну или одна по крайней мере)");
+                            throw new RuntimeException("ЦИКЛИЧЕСКИЕ ЗАВИСИМОСТИ. Один из виновников: " + requiredFile);
                         }
                         maskForCycleChecking.set(i, true);
                         checkForNoCycles(filesInfo.get(i));
