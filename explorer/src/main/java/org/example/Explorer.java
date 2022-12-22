@@ -1,9 +1,7 @@
 package org.example;
 
-import java.awt.*;
 import java.io.File;
 import java.util.*;
-import java.util.List;
 
 public class Explorer {
     // private String rootPath;
@@ -20,7 +18,7 @@ public class Explorer {
         checkAndSaveRootPath(rootPath);
         findAllFilesAndRequirements(new File(rootPath));
         checkForNoCycles();
-        Collections.sort(filesInfo);
+        filesInfo.sort(FileInfo::compareTo);
         concatenateAllFiles();
     }
 
@@ -45,10 +43,11 @@ public class Explorer {
      * Получаем результат конкатенации списка файлов (меняем resultOfConcatenation)
      */
     private void concatenateAllFiles() throws RuntimeException {
-        // TODO
-        // Наверное и не рантайм экспшн
-        // Но что-то наверняка выбрасывается
-        // Подправить, когда станет ясно, что (в комментариях тоже)
+        //
+        resultOfConcatenation = "";
+        for (FileInfo fileInfo : filesInfo) {
+            resultOfConcatenation = resultOfConcatenation.concat(fileInfo.textOfFile);
+        }
     }
 
     /**
@@ -72,7 +71,7 @@ public class Explorer {
     /**
      * Находит все файлы и зависимости, записывает их в filesAndRequiredFiles и в files
      * Если будет обнаружен не .txt файл, то он будет проигнорирован
-     * @throws RuntimeException
+     * @throws RuntimeException ОШИБКА ВО ВРЕМЯ ПОИСКА ФАЙЛОВ И ЗАВИСИМОСТЕЙ
      */
     private void findAllFilesAndRequirements(File rootFile) throws RuntimeException {
         try {
@@ -98,7 +97,6 @@ public class Explorer {
      * @throws RuntimeException Если есть циклы в зависимостях
      */
     private void checkForNoCycles() throws RuntimeException {
-        //
         for (FileInfo fileInfo : filesInfo) {
             setMaskForCycleChecking();
             checkForNoCycles(fileInfo);
@@ -110,15 +108,16 @@ public class Explorer {
      * @throws RuntimeException Если есть циклы в зависимостях
      */
     private void checkForNoCycles(FileInfo fileInfo) throws RuntimeException {
-        //
-        for (String requiredFile : fileInfo.requiredFiles) {
-            for (int i = 0; i < filesInfo.size(); ++i) {
-                if (filesInfo.get(i).fileName.equals(requiredFile)) {
-                    if (maskForCycleChecking.get(i)) {
-                        throw new RuntimeException("ЦИКЛИЧЕСКИЕ ЗАВИСИМОСТИ (ну или одна по крайней мере)");
+        if (fileInfo.requiredFiles != null) {
+            for (String requiredFile : fileInfo.requiredFiles) {
+                for (int i = 0; i < filesInfo.size(); ++i) {
+                    if (filesInfo.get(i).fileName.equals(requiredFile)) {
+                        if (maskForCycleChecking.get(i)) {
+                            throw new RuntimeException("ЦИКЛИЧЕСКИЕ ЗАВИСИМОСТИ (ну или одна по крайней мере)");
+                        }
+                        maskForCycleChecking.set(i, true);
+                        checkForNoCycles(filesInfo.get(i));
                     }
-                    maskForCycleChecking.set(i, true);
-                    checkForNoCycles(filesInfo.get(i));
                 }
             }
         }
@@ -130,7 +129,7 @@ public class Explorer {
     private class FileInfo implements Comparable<FileInfo> {
         String fileName;
         String textOfFile;
-        ArrayList<String> requiredFiles;
+        ArrayList<String> requiredFiles = new ArrayList<>();
         private FileInfo(String fileName) {
             this.fileName = fileName;
             saveTextAndRequiredFiles();
@@ -162,8 +161,13 @@ public class Explorer {
 
         @Override
         public int compareTo(FileInfo otherFileInfo) {
-            // TODO сортировка в зависимости от зависимостей :D (типа если зависит, то больше или меньше)
-            return 0;
+            if (this.requiredFiles != null && this.requiredFiles.contains(otherFileInfo.fileName)) {
+                return 1;
+            } else if (otherFileInfo.requiredFiles != null && otherFileInfo.requiredFiles.contains(this.fileName)) {
+                return -1;
+            } else {
+                return 0;
+            }
         }
     }
 }
