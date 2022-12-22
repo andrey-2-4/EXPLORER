@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.*;
 
 public class Explorer {
-    // private String rootPath;
+    private String rootPath;
     private final ArrayList<FileInfo> filesInfo = new ArrayList<>();
     private ArrayList<Boolean> maskForCycleChecking;
     private String resultOfConcatenation;
@@ -43,7 +43,6 @@ public class Explorer {
      * Получаем результат конкатенации списка файлов (меняем resultOfConcatenation)
      */
     private void concatenateAllFiles() throws RuntimeException {
-        //
         resultOfConcatenation = "";
         for (FileInfo fileInfo : filesInfo) {
             resultOfConcatenation = resultOfConcatenation.concat(fileInfo.textOfFile);
@@ -61,7 +60,8 @@ public class Explorer {
             if (!rootFile.isDirectory()) {
                 throw new RuntimeException();
             }
-            // this.rootPath = rootPath;
+            this.rootPath = rootPath;
+            rootPath = rootPath.substring(rootPath.lastIndexOf(File.separator) + 1);
             requireString = requireString + rootPath;
         } catch (Exception exception) {
             throw new RuntimeException("НЕПРАВИЛЬНЫЙ КОРНЕВОЙ ПУТЬ");
@@ -155,6 +155,8 @@ public class Explorer {
             if (string.startsWith(requireString)) {
                 string = string.replaceAll("'", "");
                 string = string.replaceFirst("require ", "");
+                string = string.substring(string.indexOf(File.separator) + 1);
+                string = rootPath + File.separator + string;
                 requiredFiles.add(string);
             }
         }
