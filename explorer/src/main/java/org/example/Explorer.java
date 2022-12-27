@@ -3,13 +3,10 @@ package org.example;
 import java.io.File;
 import java.util.*;
 
+/**
+ * Класс для сортировки по зависимостям и конкатенации файлов
+ */
 public class Explorer {
-    private String rootPath;
-    private final ArrayList<FileInfo> filesInfo = new ArrayList<>();
-    private ArrayList<Boolean> maskForCycleChecking;
-    private String resultOfConcatenation;
-    private String requireString = "require '";
-
     /**
      * Инициализирует класс
      * @param rootPath Корневой путь
@@ -29,6 +26,12 @@ public class Explorer {
         System.out.println(resultOfConcatenation);
     }
 
+    private String rootPath;
+    private final ArrayList<FileInfo> filesInfo = new ArrayList<>();
+    private ArrayList<Boolean> maskForCycleChecking;
+    private String resultOfConcatenation;
+    private String requireString = "require '";
+
     /**
      * Обнуляет маску
      */
@@ -42,7 +45,7 @@ public class Explorer {
     /**
      * Получаем результат конкатенации списка файлов (меняем resultOfConcatenation)
      */
-    private void concatenateAllFiles() throws RuntimeException {
+    private void concatenateAllFiles() {
         resultOfConcatenation = "";
         for (FileInfo fileInfo : filesInfo) {
             resultOfConcatenation = resultOfConcatenation.concat(fileInfo.textOfFile);
@@ -124,7 +127,7 @@ public class Explorer {
     }
 
     /**
-     * Вспомогательный класс для того, чтобы отсортировать файлы
+     * Вспомогательный класс для того, чтобы отсортировать файлы и хранения содержимого + зависимостей
      */
     private class FileInfo implements Comparable<FileInfo> {
         String fileName;

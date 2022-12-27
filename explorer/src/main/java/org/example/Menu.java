@@ -2,8 +2,15 @@ package org.example;
 
 import java.util.Scanner;
 
+/**
+ * Класс для обработки ввода
+ */
 public class Menu {
     private final static Scanner in = new Scanner(System.in);
+
+    /**
+     * Метод для начала/завершения работы
+     */
     public static void startExplorer() {
         while (true) {
             System.out.println("Введите '0', чтобы завершить программу");
