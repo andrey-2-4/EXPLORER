@@ -64,8 +64,6 @@ public class Explorer {
                 throw new RuntimeException();
             }
             this.rootPath = rootPath;
-            rootPath = rootPath.substring(rootPath.lastIndexOf(File.separator) + 1);
-            requireString = requireString + rootPath;
         } catch (Exception exception) {
             throw new RuntimeException("НЕПРАВИЛЬНЫЙ КОРНЕВОЙ ПУТЬ");
         }
@@ -158,7 +156,6 @@ public class Explorer {
             if (string.startsWith(requireString)) {
                 string = string.replaceAll("'", "");
                 string = string.replaceFirst("require ", "");
-                string = string.substring(string.indexOf(File.separator) + 1);
                 string = rootPath + File.separator + string;
                 requiredFiles.add(string);
             }
