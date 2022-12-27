@@ -28,20 +28,11 @@ public class Explorer {
 
     private String rootPath;
     private final ArrayList<FileInfo> filesInfo = new ArrayList<>();
-    private ArrayList<Boolean> maskForCycleChecking;
+    private String nameOfVerifiableFile;
     private String resultOfConcatenation;
-    private String requireString = "require '";
-
-    /**
-     * Обнуляет маску
-     */
-    private void setMaskForCycleChecking() {
-        maskForCycleChecking = new ArrayList<>();
-        for (int i = 0; i < filesInfo.size(); ++i) {
-            maskForCycleChecking.add(false);
-        }
-    }
-
+    // Не перевожу в локальную переменную, т.к. удобнее в случае необходимости менять ее здесь, а не искать определенный метод
+    private final String requireString = "require ";
+    
     /**
      * Получаем результат конкатенации списка файлов (меняем resultOfConcatenation)
      */
@@ -99,7 +90,7 @@ public class Explorer {
      */
     private void checkForNoCycles() throws RuntimeException {
         for (FileInfo fileInfo : filesInfo) {
-            setMaskForCycleChecking();
+            nameOfVerifiableFile = fileInfo.fileName;
             checkForNoCycles(fileInfo);
         }
     }
@@ -108,16 +99,15 @@ public class Explorer {
      * Проверка на наличие циклов в зависимостях ОДНОГО файла
      * @throws RuntimeException Если есть циклы в зависимостях
      */
-    private void checkForNoCycles(FileInfo fileInfo) throws RuntimeException {
-        if (fileInfo.requiredFiles != null) {
-            for (String requiredFile : fileInfo.requiredFiles) {
-                for (int i = 0; i < filesInfo.size(); ++i) {
-                    if (filesInfo.get(i).fileName.equals(requiredFile)) {
-                        if (maskForCycleChecking.get(i)) {
+    private void checkForNoCycles(FileInfo verifiableFileInfo) throws RuntimeException {
+        if (verifiableFileInfo.requiredFiles != null) {
+            for (String requiredFile : verifiableFileInfo.requiredFiles) {
+                for (FileInfo fileInfo : filesInfo) {
+                    if (fileInfo.fileName.equals(requiredFile)) {
+                        if (requiredFile.equals(nameOfVerifiableFile)) {
                             throw new RuntimeException("ЦИКЛИЧЕСКИЕ ЗАВИСИМОСТИ. Один из виновников: " + requiredFile);
                         }
-                        maskForCycleChecking.set(i, true);
-                        checkForNoCycles(filesInfo.get(i));
+                        checkForNoCycles(fileInfo);
                     }
                 }
             }
@@ -155,9 +145,11 @@ public class Explorer {
         private void addRequirements(String string) {
             if (string.startsWith(requireString)) {
                 string = string.replaceAll("'", "");
-                string = string.replaceFirst("require ", "");
+                string = string.replaceFirst(requireString, "");
                 string = rootPath + File.separator + string;
-                requiredFiles.add(string);
+                if (!requiredFiles.contains(string)) {
+                    requiredFiles.add(string);
+                }
             }
         }
 
